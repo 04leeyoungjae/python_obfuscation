@@ -22,7 +22,10 @@ def obf_byte(code):
     """
     ret = ""
     for byte in code:
-        ret += f"\\x{ord(byte):02x}"
+        if ord(byte)<=0x7E: #한글깨짐 방지
+            ret += f"\\x{ord(byte):02x}"
+        else:
+            ret += byte
     return f"exec('{ret}')"
 
 def obf_base64(code):
@@ -61,11 +64,11 @@ def obf(code,repeat):
     """
     code=obf_byte(code) # 한글호환성을 위해 최초1회 바이트로 바꿈
     for _ in range(repeat):
-        if experiment(50):
+        if experiment(100):
             code=obf_base64(code)
-        if experiment(50):
+        if experiment(100):
             code=obf_byte(code)
-        if experiment(30):
+        if experiment(100):
             code=obf_xor(code)
     return formatting_code(code)
 
@@ -106,7 +109,7 @@ def write_file(filename,code):
     except:
         return 1
     
-def main(filename=None,repeat=5):
+def main(filename=None,repeat=1):
     code,filename = read_file(filename)
     seed(len(code)) # 같은 결과를 보장하기 위해서
     code=obf(code,repeat)
@@ -114,4 +117,4 @@ def main(filename=None,repeat=5):
         print("파일 저장 실패")
 
 if __name__=="__main__":
-    main("mini_ctf/main.py")
+    main("app.py")
