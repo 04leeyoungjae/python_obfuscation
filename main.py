@@ -3,7 +3,7 @@ import base64
 from random import randint
 
 def experiment(probability):
-    """
+    r"""
     @breif : (probabilty %)의 확률로 1 반환
     @param : 몇 퍼센트의 확률로 1을 반환할지 설정
     @return : 1 또는 0 (bool)
@@ -15,8 +15,8 @@ def experiment(probability):
         return 0
 
 def obf_byte(code):
-    """
-    @breif : 코드를 \x아스키코드 형태로 암호화
+    r"""
+    @breif : 코드를 \x유니코드 형태로 암호화
     @param : 난독화할 코드
     @return : exec(바이트코드) 형태의 문자열(단독으로도 실행가능)
     """
@@ -26,7 +26,7 @@ def obf_byte(code):
     return f"exec('{ret}')"
 
 def obf_base64(code):
-    """
+    r"""
     @breif : 코드를 base64로 암호화
     @param : 암호화할 코드
     @return : base64로 암호화된 완전한 파이썬 코드(단독으로도 실행가능)
@@ -35,7 +35,7 @@ def obf_base64(code):
     return f"exec(__import__('base64').b64decode(('{encoded_code}')))"
 
 def obf(code):
-    """
+    r"""
     @breif : 코드를 확률에 따라 암호화하여 복호화가 까다롭게 하는 코드
     @param : 암호화할 코드
     @return : 최종적으로 암호화가 완료된 코드
@@ -47,7 +47,7 @@ def obf(code):
     return code
 
 def formatting_code(code):
-    """
+    r"""
     @brief : 코드 예쁘게 포장해주는 함수
     @param : 암호화가 완료된 코드
     @return : 포매팅이 완료된 최종 코드
