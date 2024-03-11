@@ -37,7 +37,8 @@ def obf_varname(code):
 
     def extract_module(node):
         if isinstance(node,ast.Import) or (isinstance(node,ast.ImportFrom) and node.names[0].name!="*"):
-            reserved_filter.append(node.names[0].name)
+            for module in node.names:
+                reserved_filter.append(module.name)
         elif isinstance(node,ast.ImportFrom) and node.names[0].name=="*":
             for function in dir(__import__(node.module)):
                 reserved_filter.append(function)
@@ -45,7 +46,7 @@ def obf_varname(code):
     def extract_var(node):
         nonlocal index
         if isinstance(node,ast.Name):
-            if node.id in reserved_filter:
+            if node.id in reserved_filter or node.id.startswith("__"):
                 new_varname[node.id]=node.id
                 return
             elif node.id not in new_varname:
@@ -59,7 +60,7 @@ def obf_varname(code):
         nonlocal index
         if isinstance(node,ast.Global):
             global_var=node.names[0]
-            if global_var in reserved_filter:
+            if global_var in reserved_filter or global_var.startswith("__"):
                 new_varname[global_var]=global_var
             elif global_var not in new_varname:
                 new_varname[global_var]=predefined_list[index]
@@ -71,7 +72,7 @@ def obf_varname(code):
     def extract_fucntion(node):
         nonlocal index
         if isinstance(node,ast.FunctionDef):
-            if node.name in reserved_filter:
+            if node.name in reserved_filter or node.name.startswith("__"):
                 new_varname[node.name]=node.name
                 return
             elif node.name not in new_varname:
@@ -225,4 +226,4 @@ def main(filename=None,repeat=1):
         print("파일 저장 실패")
 
 if __name__=="__main__":
-    main("test.py",repeat=0)
+    main(__file__,repeat=0)
