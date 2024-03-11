@@ -1,6 +1,9 @@
 # python code obfuscation
+import ast
+import astor
 import base64
-from random import randint,seed
+from itertools import combinations_with_replacement
+from random import randint,seed,shuffle
 
 def experiment(probability):
     r"""
@@ -13,6 +16,107 @@ def experiment(probability):
         return 1
     else:
         return 0
+    
+def obf_varname(code):
+    def generate_predefined_list(length):
+        string = "O0BD8"
+        non_numeric_combinations = []
+        
+        for combination in combinations_with_replacement(string, length):
+            if not combination[0].isdigit():
+                non_numeric_combinations.append(''.join(combination))
+        shuffle(non_numeric_combinations)
+        
+        return non_numeric_combinations
+    
+    variables=list()
+    reserved_filter=list(dir(__builtins__))
+    new_varname=dict()
+    index=0
+    predefined_list=list(generate_predefined_list(16))  
+
+    def extract_module(node):
+        if isinstance(node,ast.Import) or (isinstance(node,ast.ImportFrom) and node.names[0].name!="*"):
+            reserved_filter.append(node.names[0].name)
+        elif isinstance(node,ast.ImportFrom) and node.names[0].name=="*":
+            for function in dir(__import__(node.module)):
+                reserved_filter.append(function)
+                
+    def extract_var(node):
+        nonlocal index
+        if isinstance(node,ast.Name):
+            if node.id in reserved_filter:
+                new_varname[node.id]=node.id
+                return
+            elif node.id not in new_varname:
+                new_varname[node.id]=predefined_list[index]
+                index+=1
+                variables.append(node.id)
+            else:
+                pass
+            
+    def extract_global_var(node):
+        nonlocal index
+        if isinstance(node,ast.Global):
+            global_var=node.names[0]
+            if global_var in reserved_filter:
+                new_varname[global_var]=global_var
+            elif global_var not in new_varname:
+                new_varname[global_var]=predefined_list[index]
+                index+=1
+                variables.append(global_var)
+            else:
+                pass
+            
+    def extract_fucntion(node):
+        nonlocal index
+        if isinstance(node,ast.FunctionDef):
+            if node.name in reserved_filter:
+                new_varname[node.name]=node.name
+                return
+            elif node.name not in new_varname:
+                new_varname[node.name]=predefined_list[index]
+                index+=1
+                variables.append(node.name)
+            else:
+                pass
+
+    def extract_param(node):
+        nonlocal index
+        if isinstance(node,ast.FunctionDef):
+            for arg in node.args.args:
+                if arg.arg in reserved_filter:
+                    new_varname[arg.arg]=arg.arg
+                    return
+                elif arg.arg not in new_varname:
+                    new_varname[arg.arg]=predefined_list[index]
+                    index+=1
+                    variables.append(arg.arg)
+                else:
+                    pass
+            
+    def rename(node):
+        if isinstance(node,ast.Name):
+            node.id=new_varname[node.id]
+        elif isinstance(node,ast.Global):
+            node.names[0]=new_varname[node.names[0]]
+        elif isinstance(node,ast.FunctionDef):
+            node.name=new_varname[node.name]
+            for arg in node.args.args:
+                arg.arg=new_varname[arg.arg]
+        else:
+            pass
+    
+    tree=ast.parse(code)
+    for node in ast.walk(tree):
+        extract_module(node)
+        extract_var(node)
+        extract_global_var(node)
+        extract_fucntion(node)
+        extract_param(node)
+        rename(node)
+    
+    return astor.to_source(tree)
 
 def obf_byte(code):
     r"""
@@ -62,24 +166,28 @@ def obf(code,repeat):
     @param repeat : 암호화를 시행할 횟수
     @return : 최종적으로 암호화가 완료된 코드
     """
-    code=obf_byte(code) # 한글호환성을 위해 최초1회 바이트로 바꿈
+    code=obf_varname(code)
     for _ in range(repeat):
-        if experiment(100):
+        if experiment(10):
             code=obf_base64(code)
-        if experiment(100):
+        if experiment(50):
             code=obf_byte(code)
-        if experiment(100):
+        if experiment(30): 
             code=obf_xor(code)
-    return formatting_code(code)
+    if repeat:
+        return formatting_code(code)
+    else:
+        return code
 
-def formatting_code(code):
+def formatting_code(code,indent="    "):
     r"""
     @brief : 코드 예쁘게 포장해주는 함수
     @param : 암호화가 완료된 코드
     @return : 포매팅이 완료된 최종 코드
     """
+    code="\n".join([indent+line for line in code.split("\n")])
     return f"""if __name__=="__main__":
-    {code}"""
+{code}"""
     
 def read_file(filename):
     r"""
@@ -117,4 +225,4 @@ def main(filename=None,repeat=1):
         print("파일 저장 실패")
 
 if __name__=="__main__":
-    main("app.py")
+    main("test.py",repeat=0)
