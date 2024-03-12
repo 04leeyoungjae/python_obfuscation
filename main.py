@@ -86,7 +86,7 @@ def obf_varname(code):
         nonlocal index
         if isinstance(node,ast.FunctionDef):
             for arg in node.args.args:
-                if arg.arg in reserved_filter:
+                if arg.arg in reserved_filter or node.name.startswith("__"):
                     new_varname[arg.arg]=arg.arg
                     return
                 elif arg.arg not in new_varname:
@@ -95,6 +95,21 @@ def obf_varname(code):
                     variables.append(arg.arg)
                 else:
                     pass
+    
+    def extract_keyword(node):
+        nonlocal index
+        if isinstance(node,ast.Call): 
+            if node.keywords:
+                for keyword in node.keywords:
+                    if keyword.arg in reserved_filter or keyword.arg.startswith("__") or node.func.id in reserved_filter:
+                        # 내가 매개변수를 작성한 함수만 지정됨(builtin함수 제외)
+                        new_varname[keyword.arg]=keyword.arg
+                    elif keyword.arg not in new_varname:
+                        new_varname[keyword.arg]=predefined_list[index]
+                        index+=1
+                        variables.append(keyword.arg)
+                    else:
+                        pass
             
     def rename(node):
         if isinstance(node,ast.Name):
@@ -105,6 +120,9 @@ def obf_varname(code):
             node.name=new_varname[node.name]
             for arg in node.args.args:
                 arg.arg=new_varname[arg.arg]
+        elif isinstance(node,ast.Call):
+            for keyword in node.keywords:
+                keyword.arg=new_varname[keyword.arg]
         else:
             pass
     
@@ -115,6 +133,7 @@ def obf_varname(code):
         extract_global_var(node)
         extract_fucntion(node)
         extract_param(node)
+        extract_keyword(node)
         rename(node)
     
     return astor.to_source(tree)
