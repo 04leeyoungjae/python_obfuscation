@@ -29,7 +29,6 @@ def obf_varname(code):
         
         return non_numeric_combinations
     
-    variables=list()
     reserved_filter=list(dir(__builtins__))
     new_varname=dict()
     index=0
@@ -52,7 +51,6 @@ def obf_varname(code):
             elif node.id not in new_varname:
                 new_varname[node.id]=predefined_list[index]
                 index+=1
-                variables.append(node.id)
             else:
                 pass
             
@@ -65,7 +63,6 @@ def obf_varname(code):
             elif global_var not in new_varname:
                 new_varname[global_var]=predefined_list[index]
                 index+=1
-                variables.append(global_var)
             else:
                 pass
             
@@ -78,7 +75,6 @@ def obf_varname(code):
             elif node.name not in new_varname:
                 new_varname[node.name]=predefined_list[index]
                 index+=1
-                variables.append(node.name)
             else:
                 pass
 
@@ -92,7 +88,6 @@ def obf_varname(code):
                 elif arg.arg not in new_varname:
                     new_varname[arg.arg]=predefined_list[index]
                     index+=1
-                    variables.append(arg.arg)
                 else:
                     pass
     
@@ -107,7 +102,6 @@ def obf_varname(code):
                     elif keyword.arg not in new_varname:
                         new_varname[keyword.arg]=predefined_list[index]
                         index+=1
-                        variables.append(keyword.arg)
                     else:
                         pass
             
